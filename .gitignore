@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+
+# Large files and data
+*.p
+*.pickle
+*.h5
+*.hdf5
+*.model
+*.bin
+
+# OS
+.DS_Store
+Thumbs.db 
