@@ -17,7 +17,7 @@ with mp_hands.Hands(
         model_complexity=1,  # Added in newer versions (0=light, 1=full, 2=heavy)
         min_detection_confidence=0.3
 ) as hands:
-    data_dir = './data2'
+    data_dir = './data'
 
     data=[]
     labels=[]
