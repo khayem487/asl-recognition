@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASL Recognition Demo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <main class="wrapper">
+    <h1>ASL Recognition Demo</h1>
+    <p class="sub">
+      Webcam frames are processed server-side with MediaPipe.
+      {% if model_loaded %}
+      Model mode is active.
+      {% else %}
+      Running in fallback mode (hand detection only).
+      {% endif %}
+    </p>
+
+    <section class="card">
+      <div id="camera-feed" class="camera"></div>
+      <button id="start-btn" class="btn">Start Camera</button>
+    </section>
+
+    <section id="result" class="result hidden">
+      <h2>Prediction</h2>
+      <p id="prediction">-</p>
+      <small id="mode">mode: -</small>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

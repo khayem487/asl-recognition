@@ -1,0 +1,71 @@
+body {
+  margin: 0;
+  font-family: Inter, Segoe UI, Arial, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+h1 {
+  margin: 0 0 10px;
+}
+
+.sub {
+  margin: 0 0 20px;
+  color: #94a3b8;
+}
+
+.card {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.camera {
+  width: 100%;
+  min-height: 420px;
+  background: #1f2937;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.btn {
+  margin-top: 14px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.8;
+  cursor: default;
+}
+
+.result {
+  margin-top: 16px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+#prediction {
+  margin: 6px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #22d3ee;
+}
+
+.hidden {
+  display: none;
+}
