@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ASL Recognition · Khayem</title>
+  <style>
+    :root { --bg:#0a0f1f; --panel:#121a2d; --txt:#e2e8f0; --muted:#94a3b8; --brand:#7c3aed; }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(160deg,#0a0f1f,#151833);color:var(--txt)}
+    .wrap{max-width:960px;margin:0 auto;padding:40px 20px}
+    .card{background:rgba(18,26,45,.82);border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:24px;margin-bottom:18px}
+    h1{margin:0 0 8px;font-size:2rem} h2{margin:0 0 10px;font-size:1.1rem} p,li{color:var(--muted);line-height:1.55}
+    .tag{display:inline-block;background:rgba(124,58,237,.2);border:1px solid rgba(167,139,250,.45);padding:6px 10px;border-radius:999px;margin:6px 6px 0 0;font-size:.85rem}
+    .btn{display:inline-block;text-decoration:none;color:#f5f3ff;background:var(--brand);padding:10px 14px;border-radius:10px;font-weight:600;margin-right:8px}
+    code{background:#0b1328;padding:2px 6px;border-radius:6px;color:#ddd6fe}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ASL Recognition</h1>
+      <p>American Sign Language gesture recognition using MediaPipe landmarks + Random Forest classifier.</p>
+      <span class="tag">Python</span><span class="tag">MediaPipe</span><span class="tag">scikit-learn</span><span class="tag">OpenCV</span>
+      <div style="margin-top:16px">
+        <a class="btn" href="https://github.com/khayem487/asl-recognition" target="_blank" rel="noreferrer">Source Code</a>
+        <a class="btn" href="https://khayem487.github.io/portfolio/" target="_blank" rel="noreferrer">Portfolio</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Highlights</h2>
+      <ul>
+        <li>Real-time hand landmark extraction with MediaPipe</li>
+        <li>ASL letter prediction through trained ML model</li>
+        <li>Dataset capture and training scripts included</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Run locally</h2>
+      <p>This project needs webcam and local Python execution. GitHub Pages hosts the project overview only.</p>
+      <p><code>pip install -r requirements.txt</code></p>
+      <p><code>python train_classifier.py</code> then <code>python test_classifier.py</code></p>
+    </div>
+  </div>
+</body>
+</html>
