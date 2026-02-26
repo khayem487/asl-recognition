@@ -15,6 +15,9 @@ ENV/
 # Large files and data
 *.p
 *.pickle
+
+# Keep generated model optionally trackable for deployment
+!model.p
 *.h5
 *.hdf5
 *.model

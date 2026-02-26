@@ -2,14 +2,15 @@
 
 Web-enabled American Sign Language recognition demo using Python, MediaPipe and scikit-learn.
 
-This repo now includes a **deployable Flask app** so the project can run as a hosted browser demo.
+This repo includes a **deployable Flask app** and a reproducible training flow for the Kaggle dataset:
+- https://www.kaggle.com/datasets/grassknoted/asl-alphabet
 
 ## Features
 
 - Browser webcam capture
 - Real-time hand landmark extraction (MediaPipe when available)
 - Prediction endpoint (`/process_frame`)
-- Works with optional trained `model.p`
+- Supports a real trained model artifact (`model.p`)
 - OpenCV fallback hand-presence detection when MediaPipe is unavailable in runtime
 
 ## One-click deploy (Render)
@@ -33,13 +34,53 @@ python app.py
 
 Open: `http://127.0.0.1:5000`
 
-## Optional full training stack
+## Training with Kaggle ASL Alphabet
 
-For training scripts (`train_classifier.py`, plots, etc.):
+### 1) Install training dependencies
 
 ```bash
 pip install -r requirements-train.txt
 ```
+
+### 2) Download + unzip dataset
+
+Use this dataset:
+- https://www.kaggle.com/datasets/grassknoted/asl-alphabet
+
+Unzip it somewhere on disk (example path below).
+
+### 3) Train and generate `model.p`
+
+```bash
+python train_classifier.py \
+  --dataset-root "C:/path/to/asl-alphabet" \
+  --dataset-tag "kaggle.com/datasets/grassknoted/asl-alphabet" \
+  --output-model model.p \
+  --labels-path aa.txt \
+  --report-path training_report.json
+```
+
+Optional speed control (smaller sample):
+
+```bash
+python train_classifier.py --dataset-root "C:/path/to/asl-alphabet" --max-per-class 1200
+```
+
+This command will:
+- extract MediaPipe hand landmarks from dataset images
+- build/update `data.pickle`
+- train RandomForest classifier
+- save `model.p`, `aa.txt`, and `training_report.json`
+
+### 4) Use model in the web app
+
+Keep `model.p` and `aa.txt` in repo root (same level as `app.py`), then run:
+
+```bash
+python app.py
+```
+
+The app auto-loads labels from `model.p` metadata (or falls back to `aa.txt`).
 
 ## Model behavior
 

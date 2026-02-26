@@ -48,37 +48,57 @@ def create_hands_detector():
 hands = create_hands_detector()
 
 DEFAULT_LABELS = list(string.ascii_uppercase) + ["space", "del", "nothing"]
+MODEL = None
+LABELS = DEFAULT_LABELS.copy()
 
 
-def load_model(path: str):
+def load_model_bundle(path: str):
     if not os.path.exists(path):
-        return None
+        return None, None
 
     with open(path, "rb") as f:
-        model_dict = pickle.load(f)
+        model_obj = pickle.load(f)
 
-    if isinstance(model_dict, dict) and "model" in model_dict:
-        return model_dict["model"]
+    labels = None
+    model = model_obj
 
-    return model_dict
+    if isinstance(model_obj, dict):
+        if "model" in model_obj:
+            model = model_obj["model"]
+        labels_obj = model_obj.get("labels")
+        if isinstance(labels_obj, (list, tuple)):
+            labels = [str(x) for x in labels_obj if str(x).strip()]
+
+    return model, labels
 
 
 def load_labels(path: str):
     if not os.path.exists(path):
-        return DEFAULT_LABELS
+        return DEFAULT_LABELS.copy()
 
     with open(path, "r", encoding="utf-8") as f:
         labels = [line.strip() for line in f.readlines() if line.strip()]
 
-    return labels if labels else DEFAULT_LABELS
+    return labels if labels else DEFAULT_LABELS.copy()
 
 
-MODEL = load_model(MODEL_PATH)
-LABELS = load_labels(LABELS_PATH)
+def refresh_runtime_artifacts():
+    global MODEL, LABELS
+
+    model, labels_from_model = load_model_bundle(MODEL_PATH)
+    MODEL = model
+
+    if labels_from_model:
+        LABELS = labels_from_model
+    else:
+        LABELS = load_labels(LABELS_PATH)
+
+
+refresh_runtime_artifacts()
 
 print(
     f"[INFO] ASL demo started. model_loaded={MODEL is not None}, "
-    f"hands_detector_loaded={hands is not None}"
+    f"hands_detector_loaded={hands is not None}, labels_count={len(LABELS)}"
 )
 
 
@@ -175,6 +195,7 @@ def health():
             "status": "ok",
             "model_loaded": MODEL is not None,
             "detector_loaded": hands is not None,
+            "labels_count": len(LABELS),
         }
     )
 
