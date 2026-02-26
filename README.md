@@ -34,6 +34,19 @@ python app.py
 
 Open: `http://127.0.0.1:5000`
 
+## No-local-training option (GitHub Actions cloud)
+
+If your PC is too slow, use the built-in workflow:
+
+1. Go to **Actions** tab in this repo.
+2. Run workflow: **"Train ASL model (cloud)"**.
+3. Keep defaults (or tune `max_per_class` / `n_estimators`).
+4. At the end:
+   - artifacts (`model.p`, `aa.txt`, `training_report.json`) are uploaded, and
+   - if `model.p` is not too large, it is auto-committed to the repo.
+
+Then trigger a Render redeploy so production loads the new `model.p`.
+
 ## Training with Kaggle ASL Alphabet
 
 ### 1) Install training dependencies

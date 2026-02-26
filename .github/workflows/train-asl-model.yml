@@ -1,0 +1,126 @@
+name: Train ASL model (cloud)
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_per_class:
+        description: "Max images per class (0 = all)"
+        required: false
+        default: "1200"
+      n_estimators:
+        description: "RandomForest n_estimators"
+        required: false
+        default: "250"
+      max_depth:
+        description: "RandomForest max_depth (0 = None)"
+        required: false
+        default: "0"
+      labels:
+        description: "Optional label subset, comma-separated (empty = all)"
+        required: false
+        default: ""
+      commit_model:
+        description: "Commit model.p + aa.txt + training_report.json back to repo"
+        required: false
+        default: "true"
+
+permissions:
+  contents: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-train.txt kagglehub
+
+      - name: Download Kaggle dataset
+        run: |
+          python - <<'PY'
+          import os
+          import kagglehub
+
+          path = kagglehub.dataset_download("grassknoted/asl-alphabet")
+          print(f"Downloaded dataset path: {path}")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as f:
+            f.write(f"DATASET_ROOT={path}\n")
+          PY
+
+      - name: Train model
+        run: |
+          python train_classifier.py \
+            --dataset-root "$DATASET_ROOT" \
+            --dataset-tag "kaggle.com/datasets/grassknoted/asl-alphabet" \
+            --output-model model.p \
+            --labels-path aa.txt \
+            --report-path training_report.json \
+            --max-per-class "${{ github.event.inputs.max_per_class }}" \
+            --n-estimators "${{ github.event.inputs.n_estimators }}" \
+            --max-depth "${{ github.event.inputs.max_depth }}" \
+            --labels "${{ github.event.inputs.labels }}"
+
+      - name: Show training summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          with open("training_report.json", "r", encoding="utf-8") as f:
+            report = json.load(f)
+
+          print("Accuracy:", report.get("metrics", {}).get("accuracy"))
+          print("F1 weighted:", report.get("metrics", {}).get("f1_weighted"))
+          print("Classes:", len(report.get("classes", [])))
+          print("Samples:", report.get("samples_total"))
+          print("model.p size bytes:", os.path.getsize("model.p"))
+          PY
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: asl-model-artifacts
+          path: |
+            model.p
+            aa.txt
+            training_report.json
+            data.pickle
+          if-no-files-found: error
+
+      - name: Commit trained model to repo (optional)
+        if: ${{ github.event.inputs.commit_model == 'true' }}
+        run: |
+          MODEL_SIZE=$(stat -c%s model.p)
+          echo "model.p size: $MODEL_SIZE bytes"
+
+          if [ "$MODEL_SIZE" -gt 95000000 ]; then
+            echo "model.p is larger than 95MB. Skipping auto-commit; download artifact instead."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add model.p aa.txt training_report.json
+
+          if git diff --cached --quiet; then
+            echo "No model changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Add trained ASL model from cloud workflow"
+          git push origin "${{ github.ref_name }}"
