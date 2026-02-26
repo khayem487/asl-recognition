@@ -4,9 +4,13 @@ import pickle
 import string
 
 import cv2
-import mediapipe as mp
 import numpy as np
 from flask import Flask, jsonify, render_template, request
+
+try:
+    import mediapipe as mp
+except Exception:
+    mp = None
 
 app = Flask(__name__)
 
@@ -14,13 +18,34 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model.p")
 LABELS_PATH = os.path.join(BASE_DIR, "aa.txt")
 
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(
-    static_image_mode=False,
-    max_num_hands=1,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5,
-)
+
+def create_hands_detector():
+    if mp is None:
+        return None
+
+    mp_hands = None
+    try:
+        # Common API path
+        mp_hands = mp.solutions.hands
+    except Exception:
+        try:
+            # Some mediapipe builds expose solutions only under python package path
+            from mediapipe.python.solutions import hands as mp_hands  # type: ignore
+        except Exception:
+            return None
+
+    try:
+        return mp_hands.Hands(
+            static_image_mode=False,
+            max_num_hands=1,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+        )
+    except Exception:
+        return None
+
+
+hands = create_hands_detector()
 
 DEFAULT_LABELS = list(string.ascii_uppercase) + ["space", "del", "nothing"]
 
@@ -51,10 +76,16 @@ def load_labels(path: str):
 MODEL = load_model(MODEL_PATH)
 LABELS = load_labels(LABELS_PATH)
 
-print(f"[INFO] ASL demo started. model_loaded={MODEL is not None}")
+print(
+    f"[INFO] ASL demo started. model_loaded={MODEL is not None}, "
+    f"hands_detector_loaded={hands is not None}"
+)
 
 
 def extract_landmarks(frame_bgr):
+    if hands is None:
+        return None
+
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
     results = hands.process(frame_rgb)
 
@@ -131,6 +162,8 @@ def process_frame():
 
     features = extract_landmarks(frame)
     if features is None:
+        if hands is None:
+            return jsonify(success=True, prediction="DETECTOR_UNAVAILABLE", mode="fallback")
         return jsonify(success=False, prediction="NO_HAND", mode="none")
 
     if MODEL is None:
