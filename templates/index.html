@@ -10,11 +10,16 @@
   <main class="wrapper">
     <h1>ASL Recognition Demo</h1>
     <p class="sub">
-      Webcam frames are processed server-side with MediaPipe.
-      {% if model_loaded %}
-      Model mode is active.
+      Webcam frames are processed server-side.
+      {% if detector_loaded %}
+      MediaPipe hand landmark detection is active.
       {% else %}
-      Running in fallback mode (hand detection only).
+      MediaPipe is unavailable on this runtime — using OpenCV fallback hand detection.
+      {% endif %}
+      {% if model_loaded %}
+      Model prediction mode is active.
+      {% else %}
+      No trained model found, so this demo returns hand-presence signals.
       {% endif %}
     </p>
 

@@ -52,11 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const data = await response.json();
-      if (data.success) {
-        resultBox.classList.remove("hidden");
-        predictionEl.textContent = data.prediction || "-";
-        modeEl.textContent = "mode: " + (data.mode || "unknown");
-      }
+      resultBox.classList.remove("hidden");
+      predictionEl.textContent = data.prediction || (data.success ? "-" : "NO_HAND");
+      modeEl.textContent = "mode: " + (data.mode || "unknown");
     } catch (error) {
       console.error("Frame processing failed", error);
     }

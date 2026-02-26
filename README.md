@@ -7,10 +7,10 @@ This repo now includes a **deployable Flask app** so the project can run as a ho
 ## Features
 
 - Browser webcam capture
-- Real-time hand landmark extraction (MediaPipe)
+- Real-time hand landmark extraction (MediaPipe when available)
 - Prediction endpoint (`/process_frame`)
 - Works with optional trained `model.p`
-- Fallback mode when no model is present (hand detection signal)
+- OpenCV fallback hand-presence detection when MediaPipe is unavailable in runtime
 
 ## One-click deploy (Render)
 
@@ -43,8 +43,9 @@ pip install -r requirements-train.txt
 
 ## Model behavior
 
-- If `model.p` exists, the app tries model prediction.
-- If `model.p` is missing (or fails), the app still runs and returns fallback predictions.
+- If `model.p` exists and hand landmarks are available, the app returns model predictions.
+- If `model.p` is missing, the app returns hand-presence predictions.
+- If MediaPipe is unavailable, the app still runs using a lightweight OpenCV fallback detector.
 
 ## Project structure
 

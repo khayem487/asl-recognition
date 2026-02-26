@@ -131,14 +131,52 @@ def decode_prediction(prediction_value):
     return str(prediction_value)
 
 
+def detect_hand_fallback(frame_bgr):
+    """Very lightweight fallback when MediaPipe is unavailable.
+
+    This is not ASL classification — only rough hand-presence detection.
+    """
+    frame_hsv = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
+
+    # Broad skin-color mask (works reasonably for demo conditions)
+    lower = np.array([0, 20, 40], dtype=np.uint8)
+    upper = np.array([30, 255, 255], dtype=np.uint8)
+    mask = cv2.inRange(frame_hsv, lower, upper)
+
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return False
+
+    largest = max(contours, key=cv2.contourArea)
+    area = cv2.contourArea(largest)
+    frame_area = frame_bgr.shape[0] * frame_bgr.shape[1]
+
+    # Require meaningful foreground area for a positive signal
+    return area > 0.02 * frame_area
+
+
 @app.route("/")
 def index():
-    return render_template("index.html", model_loaded=MODEL is not None)
+    return render_template(
+        "index.html",
+        model_loaded=MODEL is not None,
+        detector_loaded=hands is not None,
+    )
 
 
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "model_loaded": MODEL is not None})
+    return jsonify(
+        {
+            "status": "ok",
+            "model_loaded": MODEL is not None,
+            "detector_loaded": hands is not None,
+        }
+    )
 
 
 @app.route("/process_frame", methods=["POST"])
@@ -162,8 +200,9 @@ def process_frame():
 
     features = extract_landmarks(frame)
     if features is None:
-        if hands is None:
-            return jsonify(success=True, prediction="DETECTOR_UNAVAILABLE", mode="fallback")
+        # Fallback path when MediaPipe is unavailable or no landmarks are produced.
+        if detect_hand_fallback(frame):
+            return jsonify(success=True, prediction="HAND_DETECTED", mode="fallback-opencv")
         return jsonify(success=False, prediction="NO_HAND", mode="none")
 
     if MODEL is None:
