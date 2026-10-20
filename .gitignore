@@ -7,6 +7,7 @@ __pycache__/
 .venv/
 venv/
 ENV/
+.vercel/
 
 # IDE
 .idea/
@@ -25,4 +26,5 @@ ENV/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+.vercel

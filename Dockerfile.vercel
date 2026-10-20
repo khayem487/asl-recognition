@@ -1,0 +1,25 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    MPLCONFIGDIR=/tmp/matplotlib \
+    REQUIRE_ASL_MODEL=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libglib2.0-0 libgl1 libsm6 libxext6 libxrender1 libxcb1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py model.p aa.txt ./
+COPY templates ./templates
+COPY static ./static
+
+# A deployment must load the actual trained classifier and MediaPipe detector.
+# A hand-presence fallback must never be published as a working ASL demo.
+RUN python -c "import app; assert app.MODEL is not None; assert app.hands is not None; assert len(app.LABELS) == 28; print('ASL model and MediaPipe ready')"
+
+EXPOSE 80
+CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-80} --workers 1 --threads 2 --timeout 120"]

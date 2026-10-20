@@ -3,4 +3,5 @@ gunicorn>=22.0.0
 opencv-python-headless>=4.8.0,<5
 mediapipe==0.10.14
 numpy>=1.24.0,<2
-scikit-learn>=1.2.0
+# Match the version used to serialize the committed RandomForest model.
+scikit-learn==1.8.0

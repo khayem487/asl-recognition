@@ -2,6 +2,7 @@ import base64
 import os
 import pickle
 import string
+from threading import Lock
 
 import cv2
 import numpy as np
@@ -36,7 +37,9 @@ def create_hands_detector():
 
     try:
         return mp_hands.Hands(
-            static_image_mode=False,
+            # Requests may come from different visitors; do not carry one
+            # visitor's hand tracking state into the next visitor's frame.
+            static_image_mode=True,
             max_num_hands=1,
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5,
@@ -46,6 +49,7 @@ def create_hands_detector():
 
 
 hands = create_hands_detector()
+hands_lock = Lock()
 
 DEFAULT_LABELS = list(string.ascii_uppercase) + ["space", "del", "nothing"]
 MODEL = None
@@ -96,6 +100,9 @@ def refresh_runtime_artifacts():
 
 refresh_runtime_artifacts()
 
+if os.environ.get("REQUIRE_ASL_MODEL") == "1" and (MODEL is None or hands is None):
+    raise RuntimeError("ASL inference requires both the trained model and MediaPipe Hands")
+
 print(
     f"[INFO] ASL demo started. model_loaded={MODEL is not None}, "
     f"hands_detector_loaded={hands is not None}, labels_count={len(LABELS)}"
@@ -107,7 +114,10 @@ def extract_landmarks(frame_bgr):
         return None
 
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-    results = hands.process(frame_rgb)
+    # A MediaPipe graph is shared by the worker; it cannot process two frames
+    # concurrently when the hosting runtime dispatches simultaneous requests.
+    with hands_lock:
+        results = hands.process(frame_rgb)
 
     if not results.multi_hand_landmarks:
         return None
@@ -203,9 +213,11 @@ def health():
 @app.route("/process_frame", methods=["POST"])
 def process_frame():
     payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return jsonify(success=False, error="invalid_frame"), 400
     frame_data = payload.get("frame")
 
-    if not frame_data or "," not in frame_data:
+    if not isinstance(frame_data, str) or "," not in frame_data:
         return jsonify(success=False, error="invalid_frame"), 400
 
     try:
@@ -222,7 +234,7 @@ def process_frame():
     features = extract_landmarks(frame)
     if features is None:
         # Fallback path when MediaPipe is unavailable or no landmarks are produced.
-        if detect_hand_fallback(frame):
+        if os.environ.get("REQUIRE_ASL_MODEL") != "1" and detect_hand_fallback(frame):
             return jsonify(success=True, prediction="HAND_DETECTED", mode="fallback-opencv")
         return jsonify(success=False, prediction="NO_HAND", mode="none")
 
@@ -237,6 +249,9 @@ def process_frame():
         label = decode_prediction(pred)
         return jsonify(success=True, prediction=label, mode="model")
     except Exception:
+        if os.environ.get("REQUIRE_ASL_MODEL") == "1":
+            app.logger.exception("ASL classifier inference failed")
+            return jsonify(success=False, error="model_inference_failed"), 503
         return jsonify(success=True, prediction="HAND_DETECTED", mode="fallback")
 
 

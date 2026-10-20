@@ -19,6 +19,43 @@ This repo includes a **deployable Flask app** and a reproducible training flow f
 
 Render free instance may sleep after inactivity.
 
+## Deploy the actual application on Vercel
+
+**Live application: https://khayem-asl.vercel.app/**
+
+`Dockerfile.vercel` deploys the same Flask webcam application, MediaPipe detector
+and committed 28-class RandomForest artifact. Camera frames go to
+`POST /process_frame`; this is server-side inference, rather than a static
+simulation or a hand-presence substitute. The classifier is kept unchanged.
+
+```bash
+npx vercel@64.7.0 deploy --prod
+```
+
+The image uses Python 3.12, Linux OpenCV system libraries, and scikit-learn 1.8.0
+to match the version that serialized `model.p`. The build checks that both
+MediaPipe and the model load. `REQUIRE_ASL_MODEL=1` prevents publishing a broken
+inference runtime as a successful fallback. Concurrent frame extraction is
+serialized because MediaPipe's graph is shared by the process.
+
+The Vercel Container Runtime is currently beta and scales idle production
+instances down after five minutes. A cold start remains possible; deploying on
+Vercel does not promise an always-warm server. See the official
+[container runtime documentation](https://vercel.com/docs/functions/runtimes/container).
+Render remains available as a separate deployment.
+
+To verify the running server without activating a webcam:
+
+```bash
+python tests/smoke_deployment.py https://YOUR_PROJECT.vercel.app
+# Optional: exercise MediaPipe and the actual classifier using a public hand image.
+python tests/smoke_deployment.py https://YOUR_PROJECT.vercel.app --hand-image /path/to/hand.jpg
+```
+
+The fixture test requires `mode: "model"`; a hand-presence fallback fails the
+check. It establishes that the trained inference pipeline runs, and does not
+measure live webcam recognition accuracy.
+
 ## Run locally
 
 ```bash
