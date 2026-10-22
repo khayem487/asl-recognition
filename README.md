@@ -23,6 +23,11 @@ Render free instance may sleep after inactivity.
 
 **Live application: https://khayem-asl.vercel.app/**
 
+This Vercel project is connected to `khayem487/asl-recognition`. A push to
+`master` rebuilds production automatically. `vercel.json` explicitly routes
+requests to `Dockerfile.vercel`, including its trained-model startup checks.
+Deployment previews remain protected. Local edits take effect only after a push.
+
 `Dockerfile.vercel` deploys the same Flask webcam application, MediaPipe detector
 and committed 28-class RandomForest artifact. Camera frames go to
 `POST /process_frame`; this is server-side inference, rather than a static

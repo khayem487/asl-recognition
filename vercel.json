@@ -1,4 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["cdg1"]
+  "regions": ["cdg1"],
+  "services": {
+    "asl-recognition": { "root": ".", "entrypoint": "Dockerfile.vercel" }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": { "type": "service", "service": "asl-recognition" } }
+  ]
 }
