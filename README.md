@@ -27,6 +27,8 @@ This Vercel project is connected to `khayem487/asl-recognition`. A push to
 `master` rebuilds production automatically. `vercel.json` explicitly routes
 requests to `Dockerfile.vercel`, including its trained-model startup checks.
 Deployment previews remain protected. Local edits take effect only after a push.
+The browser policy allows the application's own camera workflow and disables
+microphone access; this project only needs video frames for hand recognition.
 
 `Dockerfile.vercel` deploys the same Flask webcam application, MediaPipe detector
 and committed 28-class RandomForest artifact. Camera frames go to
