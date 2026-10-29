@@ -13,6 +13,37 @@ This repo includes a **deployable Flask app** and a reproducible training flow f
 - Supports a real trained model artifact (`model.p`)
 - OpenCV fallback hand-presence detection when MediaPipe is unavailable in runtime
 
+## Using the camera demo
+
+The camera starts only after **Start Camera**. The page explains permission,
+startup and first-response loading separately; a sleeping inference server does
+not leave the page looking frozen. **Stop Camera** cancels pending analysis and
+releases the camera. Hiding or leaving the page also stops capture, and returning
+to the tab does not restart it automatically. Only video is requested.
+
+Frames are sent to this application's server while capture is active. Uploads
+are limited to one request at a time, with the next frame about 1.2 seconds after
+the last response. Preview frames are capped at 640×480. A camera-startup deadline,
+request timeout and bounded retry prevent an unavailable camera or server from
+leaving a session running indefinitely. Late responses from a stopped session
+cannot replace a new session's result.
+
+The result panel distinguishes the real classifier from hand-presence fallback
+and no-hand results. The current endpoint returns **no confidence score**;
+the page does not invent a percentage. Alphabet predictions are experimental,
+not a translation of continuous signing or a guaranteed interpretation.
+
+The frontend lifecycle and actual DOM event wiring can be checked without a
+camera, browser or server using Node 22 or newer:
+
+```bash
+node --test tests/camera-session.test.mjs tests/camera-ui.test.mjs
+```
+
+These tests cover mocked camera permission, device loss, stop/restart races,
+serial requests, invalid responses, timeouts and hidden-page cleanup. They do
+not establish recognition accuracy or replace a real camera/browser check.
+
 ## One-click deploy (Render)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/khayem487/asl-recognition)

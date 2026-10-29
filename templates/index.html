@@ -3,38 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ASL Recognition Demo</title>
+  <meta name="description" content="Try an ASL alphabet recognition demo with real hand landmarks and server-side model inference." />
+  <title>ASL Recognition · Live alphabet demo</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 </head>
 <body>
+  <a class="skip-link" href="#workspace">Skip to the camera</a>
   <main class="wrapper">
-    <h1>ASL Recognition Demo</h1>
-    <p class="sub">
-      Webcam frames are processed server-side.
-      {% if detector_loaded %}
-      MediaPipe hand landmark detection is active.
-      {% else %}
-      MediaPipe is unavailable on this runtime — using OpenCV fallback hand detection.
-      {% endif %}
-      {% if model_loaded %}
-      Model prediction mode is active.
-      {% else %}
-      No trained model found, so this demo returns hand-presence signals.
-      {% endif %}
-    </p>
+    <header class="page-header">
+      <p class="eyebrow">Computer vision · Interactive demo</p>
+      <h1>A sign in the frame.<br /><span>A letter on the screen.</span></h1>
+      <p class="intro">Explore the ASL alphabet with one hand, a camera, and a real recognition model. Keep a sign steady and watch the next prediction.</p>
+      <div class="runtime" aria-label="Recognition capabilities">
+        {% if detector_loaded and model_loaded %}
+        <span class="runtime-pill">MediaPipe + trained classifier</span>
+        {% else %}
+        <span class="runtime-pill fallback">Hand-presence mode</span>
+        {% endif %}
+        <span>American Sign Language · experimental recognition</span>
+      </div>
+    </header>
 
-    <section class="card">
-      <div id="camera-feed" class="camera"></div>
-      <button id="start-btn" class="btn">Start Camera</button>
-    </section>
+    <section id="workspace" class="workspace" aria-label="Live recognition workspace">
+      <article class="camera-card">
+        <div class="card-heading"><h2>Your camera</h2><span class="small-label">Video only · no microphone</span></div>
+        <div class="camera-controls">
+          <button id="start-btn" class="btn" type="button" aria-controls="camera-video">Start Camera</button>
+          <button id="stop-btn" class="btn secondary" type="button" aria-controls="camera-video" disabled>Stop Camera</button>
+        </div>
+        <div id="camera-feed" class="camera" data-active="false">
+          <video id="camera-video" muted autoplay playsinline hidden aria-label="Your camera preview"></video>
+          <div class="camera-placeholder"><span class="camera-symbol" aria-hidden="true">↗</span><strong>Your camera is off</strong><p>Choose Start Camera when you are ready.</p></div>
+          <div class="hand-guide" aria-hidden="true"><span>Keep one hand in view</span></div>
+        </div>
+        <div id="session-status" class="session-status" role="status" aria-live="polite" aria-atomic="true" data-phase="idle">
+          <span class="status-dot" aria-hidden="true"></span><div><strong id="status-title">Ready when you are</strong><p id="status-detail">Your camera is off. Start it when you are ready.</p></div>
+        </div>
+        <p class="privacy-note">While running, camera frames are sent to this application's server for recognition. Stop Camera releases the camera; hiding this page also stops capture.</p>
+      </article>
 
-    <section id="result" class="result hidden">
-      <h2>Prediction</h2>
-      <p id="prediction">-</p>
-      <small id="mode">mode: -</small>
+      <aside class="result-column">
+        <section id="result" class="result" aria-labelledby="result-title">
+          <div class="card-heading"><h2 id="result-title">Latest prediction</h2><span id="mode" class="mode-label" data-mode="waiting">No live prediction</span></div>
+          <p id="prediction" class="prediction" aria-hidden="true">—</p>
+          <span id="prediction-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
+          <p id="result-note" class="result-note">Start the camera to see a prediction here.</p>
+          <div class="result-meta"><span id="latency"></span><span>No confidence score is returned by this model.</span></div>
+        </section>
+        <section class="tips" aria-labelledby="tips-title">
+          <p class="eyebrow">A better first try</p><h2 id="tips-title">Give the model a clear view.</h2>
+          <ol><li><strong>Use one hand.</strong> Keep the whole hand inside the camera frame.</li><li><strong>Face the light.</strong> A plain background and even light help the landmark detector.</li><li><strong>Hold the sign.</strong> Wait for the next response before changing your pose.</li></ol>
+          <p class="limit-note">This is an alphabet classifier, not a translator for continuous signing. A displayed label is a model prediction, not a guaranteed interpretation.</p>
+          {% if not detector_loaded %}<p class="limit-note">MediaPipe is unavailable in this runtime. Only rough hand presence can be detected.</p>{% elif not model_loaded %}<p class="limit-note">No trained classifier is loaded in this runtime. Only hand presence can be detected.</p>{% endif %}
+        </section>
+      </aside>
     </section>
+    <footer class="page-footer"><span>ASL Recognition</span><span>Python · MediaPipe · scikit-learn</span></footer>
   </main>
-
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
